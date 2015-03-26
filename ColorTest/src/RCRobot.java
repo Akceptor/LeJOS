@@ -1,5 +1,4 @@
 import lejos.hardware.Button;
-import lejos.hardware.Sound;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
@@ -12,8 +11,6 @@ public class RCRobot {
 
 	@SuppressWarnings("resource")
 	public static void main(String[] args) {
-		// Speed
-		boolean hiSpeed = false;
 		// Motors
 		RegulatedMotor m1 = new EV3LargeRegulatedMotor(MotorPort.A);
 		RegulatedMotor m2 = new EV3LargeRegulatedMotor(MotorPort.B);
@@ -29,8 +26,16 @@ public class RCRobot {
 		System.out.println("Press ESCAPE key to stop");
 		int keys = 0;
 		while (keys != 32 /* ESCAPE */) {
-			// Acquire remote channel 1
-			int command = ((EV3IRSensor) sensor).getRemoteCommand(0);
+			byte[] commands = { 0, 0, 0, 0 };
+			// Get array of commands: one per channel
+			((EV3IRSensor) sensor).getRemoteCommands(commands, 0, 4);
+			// Current command and channel
+			int command = maxValue(commands);
+			int multiplier = maxIndex(commands);
+			// Speed depends on channel
+			// 200->400->600->800
+			m1.setSpeed(200 * (1 + multiplier));
+			m2.setSpeed(200 * (1 + multiplier));
 			switch (command) {
 			case 1:
 				// Left fwd
@@ -76,18 +81,6 @@ public class RCRobot {
 				m2.backward();
 				m2.endSynchronization();
 				break;
-			case 9: // PRESS AND RELEASE!!!
-				// speed change
-				if (hiSpeed) {
-					m1.setSpeed(400);
-					m2.setSpeed(400);
-					Sound.playTone(2000, 1000);
-				} else {
-					m1.setSpeed(200);
-					m2.setSpeed(200);
-					Sound.playTone(200, 1000);
-				}
-
 			default:
 				// stop
 				m2.startSynchronization();
@@ -99,5 +92,41 @@ public class RCRobot {
 			keys = Button.readButtons();
 		}
 
+	}
+
+	/**
+	 * Returns max. value for array
+	 * 
+	 * @param bytes
+	 *            aray
+	 * @return max value
+	 */
+	private static int maxValue(byte[] bytes) {
+		int max = bytes[0];
+		for (int ktr = 0; ktr < bytes.length; ktr++) {
+			if (bytes[ktr] > max) {
+				max = bytes[ktr];
+			}
+		}
+		return max;
+	}
+
+	/**
+	 * Returns index of max. element for array
+	 * 
+	 * @param bytes
+	 *            array
+	 * @return max element index
+	 */
+	private static int maxIndex(byte[] bytes) {
+		int max = bytes[0];
+		int maxIdx = 0;
+		for (int ktr = 0; ktr < bytes.length; ktr++) {
+			if (bytes[ktr] > max) {
+				max = bytes[ktr];
+				maxIdx = ktr;
+			}
+		}
+		return maxIdx;
 	}
 }
