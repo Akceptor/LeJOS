@@ -1,0 +1,28 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+ 
+version = '1.0'
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+ 
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'RC robot EV3',  
+        	'Implementation-Version': version,
+        	'Main-Class': 'org.akceptor.lejos.RCRobotLib'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+ 
+//Get dependencies from Maven central repository
+repositories {
+    mavenCentral()
+}
+ 
+//List project dependencies
+dependencies {
+	compile 'org.apache.commons:commons-lang3:3.1''
+}
