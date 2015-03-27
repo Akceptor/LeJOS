@@ -7,23 +7,32 @@ targetCompatibility = 1.7
 
 defaultTasks 'fatJar'
 
+compileJava {
+    //enable compilation in a separate daemon process
+    options.fork = true
+    //enable incremental compilation
+    options.incremental = true
+    doLast {
+        println "[INFO] compile finished"
+    }
+}
+
 //create a single Jar with all dependencies
-task fatJar(type: Jar) {
+task fatJar(type: Jar, dependsOn: 'compileJava') {
+
 	manifest {
         attributes 'Implementation-Title': 'RC robot EV3',  
         	'Implementation-Version': version,
-        	'Main-Class': 'org.akceptor.lejos.RCRobotLib'
+        	'Main-Class': 'org.akceptor.lejos.RCRobotLib',
+        	"Class-Path" : configurations.runtime.collect { it.getName() }.join(' ')
     }
     baseName = project.name + '-all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     from { "$projectDir/bin" }
     with jar
-}
-
-task myCopy(type: Copy) {
-    from('$projectDir/bin')
-    into('$buildDir')
-    include('*.*')
+    doLast {
+        println "[INFO] JAR file created"
+    }
 }
  
 //Get dependencies from Maven central repository
