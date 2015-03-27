@@ -4,7 +4,9 @@ apply plugin: 'eclipse'
 version = '1.0'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
- 
+
+defaultTasks 'fatJar'
+
 //create a single Jar with all dependencies
 task fatJar(type: Jar) {
 	manifest {
@@ -14,7 +16,14 @@ task fatJar(type: Jar) {
     }
     baseName = project.name + '-all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { "$projectDir/bin" }
     with jar
+}
+
+task myCopy(type: Copy) {
+    from('$projectDir/bin')
+    into('$buildDir')
+    include('*.*')
 }
  
 //Get dependencies from Maven central repository
