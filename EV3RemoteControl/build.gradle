@@ -7,16 +7,6 @@ targetCompatibility = 1.7
 
 defaultTasks 'fatJar'
 
-compileJava {
-    //enable compilation in a separate daemon process
-    options.fork = true
-    //enable incremental compilation
-    options.incremental = true
-    doLast {
-        println "[INFO] compile finished"
-    }
-}
-
 //create a single Jar with all dependencies
 task fatJar(type: Jar, dependsOn: 'compileJava') {
 
