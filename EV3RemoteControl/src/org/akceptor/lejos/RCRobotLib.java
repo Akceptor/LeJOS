@@ -19,6 +19,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 public class RCRobotLib {
 
+	private static boolean verbose = false;
+
 	@SuppressWarnings("resource")
 	public static void main(String[] args) {
 		// Motors
@@ -56,6 +58,11 @@ public class RCRobotLib {
 			// NONE->400->600->800
 			m1.setSpeed(200 * (1 + multiplier));
 			m2.setSpeed(200 * (1 + multiplier));
+			if (verbose) {
+				// logging
+				System.out.println("Speed: " + m1.getSpeed() + "/" + m1.getMaxSpeed());
+				System.out.println("Keys: " + Arrays.toString(commands));
+			}
 			switch (command) {
 			case 1:
 				// Left fwd
@@ -88,6 +95,10 @@ public class RCRobotLib {
 			case 8:
 				// both bwd
 				goBackWard(m1, m2);
+				break;
+			case 9:
+				// logging
+				verbose = !verbose;
 				break;
 			default:
 				// stop
