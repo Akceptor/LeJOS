@@ -1,8 +1,5 @@
 package org.akceptor.lejos;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.hardware.ev3.LocalEV3;
@@ -14,8 +11,6 @@ import lejos.hardware.sensor.SensorModes;
 import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
-
-import org.apache.commons.lang3.ArrayUtils;
 
 public class RCRobotLib {
 
@@ -42,26 +37,21 @@ public class RCRobotLib {
 		int keys = 0;
 		while (keys != 32 /* ESCAPE */) {
 			// Control
-			byte[] commands = { 0, 0, 0, 0, 0 };
+			byte[] commands = { 0, 0, 0, 0 };
 			// Get array of commands: one per channel
 			((EV3IRSensor) sensor).getRemoteCommands(commands, 0, 4);
-			provider.fetchSample(sample, 0);
-			if (sample[0] < 20) {
-				avoidObstacleDetected(m1, m2);
-			}
 			// Current command and channel
-			// Channel 0 is used for distance measurement now so can't be used
-			// for RC
-			int command = maxValue(Arrays.copyOfRange(commands, 1, 3));
-			int multiplier = maxIndex(Arrays.copyOfRange(commands, 1, 3));
+			int command = maxValue(commands);
+			int multiplier = maxIndex(commands);
 			// Speed depends on channel
 			// NONE->400->600->800
-			m1.setSpeed(200 * (1 + multiplier));
-			m2.setSpeed(200 * (1 + multiplier));
+			m1.setSpeed(200 * (multiplier));
+			m2.setSpeed(200 * (multiplier));
 			if (verbose) {
 				// logging
-				System.out.println("Speed: " + m1.getSpeed() + "/" + m1.getMaxSpeed());
-				System.out.println("Keys: " + Arrays.toString(commands));
+				System.out.println("Multiplier: " + multiplier);
+				System.out.println("Keys: "
+						+ commands[Math.abs(multiplier - 1)]);
 			}
 			switch (command) {
 			case 1:
@@ -96,13 +86,24 @@ public class RCRobotLib {
 				// both bwd
 				goBackWard(m1, m2);
 				break;
-			case 9:
-				// logging
-				verbose = !verbose;
-				break;
-			default:
+			case 10:
 				// stop
 				goStop(m1, m2);
+				break;
+			case 11:
+				// logging
+				verbose = !verbose;
+				System.out.println("Verbose: " + verbose);
+				break;
+			default:
+				provider.fetchSample(sample, 0);
+				if (sample[0] < 20) {
+					// avoid obstacle
+					avoidObstacleDetected(m1, m2);
+				} else {
+					// stop
+					goStop(m1, m2);
+				}
 			}
 			// Acquire keys
 			keys = Button.readButtons();
@@ -110,7 +111,8 @@ public class RCRobotLib {
 
 	}
 
-	private static void avoidObstacleDetected(RegulatedMotor m1, RegulatedMotor m2) {
+	private static void avoidObstacleDetected(RegulatedMotor m1,
+			RegulatedMotor m2) {
 		m1.setSpeed(500);
 		m2.setSpeed(500);
 		goBackWard(m1, m2);
@@ -162,7 +164,15 @@ public class RCRobotLib {
 	 * @return max value
 	 */
 	private static int maxValue(byte[] bytes) {
-		return Collections.max(Arrays.asList(ArrayUtils.toObject(bytes)));
+		if (bytes[3] > 0)
+			return bytes[3];
+		if (bytes[2] > 0)
+			return bytes[2];
+		if (bytes[1] > 0)
+			return bytes[1];
+		if (bytes[0] > 0)
+			return bytes[0];
+		return 0;
 	}
 
 	/**
@@ -173,14 +183,14 @@ public class RCRobotLib {
 	 * @return max element index
 	 */
 	private static int maxIndex(byte[] bytes) {
-		int max = bytes[0];
-		int maxIdx = 0;
-		for (int ktr = 0; ktr < bytes.length; ktr++) {
-			if (bytes[ktr] > max) {
-				max = bytes[ktr];
-				maxIdx = ktr;
-			}
-		}
-		return maxIdx;
+		if (bytes[3] > 0)
+			return 4;
+		if (bytes[2] > 0)
+			return 3;
+		if (bytes[1] > 0)
+			return 2;
+		if (bytes[0] > 0)
+			return 1;
+		return 0;
 	}
 }
