@@ -12,7 +12,7 @@ import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
 
-public class RCRobotLib {
+public class RCRobot4ChannelWithDistanceSensor {
 
 	private static boolean verbose = false;
 
